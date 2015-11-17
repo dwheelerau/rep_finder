@@ -173,6 +173,7 @@ ref_genes = strain_dict[reference]
 #collect gene names for all succesful alignments
 good_genes = []
 
+log = open('log.txt', 'w')
 for gene in ref_genes:
     target_seqs = [ref_genes[gene]] #add the reference seq first
     for strain in strains:
@@ -183,13 +184,18 @@ for gene in ref_genes:
         except KeyError:
             pass
     #only do this if all strains are repressented 
-    if len(target_seqs) == len(strains)+1:
-        good_genes.append(gene)
-        tmp = open('./unaln/%s.faa'%gene, 'w')
-        for rec in target_seqs:
-            SeqIO.write(rec, tmp, 'fasta')
-        tmp.close()
 
+    info= "%s\t%s targets from %s strains\n"%(gene, len(target_seqs),
+            len(strains))
+    log.write(info)
+    #this didnt work as never enough genes
+    #if len(target_seqs) == len(strains)+1:
+    good_genes.append(gene)
+    tmp = open('./unaln/%s.faa'%gene, 'w')
+    for rec in target_seqs:
+        SeqIO.write(rec, tmp, 'fasta')
+    tmp.close()
+log.close()
 #get read for algn
 aln_files = file_list('./unaln/*.faa')
 clustal_bin = '/usr/bin/clustalw'
@@ -208,7 +214,7 @@ for fil in aln_files:
 
 #now get the DNA sequences
 strain_dict_dna = {}
-
+print "here1"
 for fil in dna_files:
     spec = fil.split('./data/dna/')[1].split('_')[0]
     found = []
@@ -233,6 +239,8 @@ ref_genes_dna = strain_dict_dna[reference]
 good_genes_dna = []
 target_seqs_dna = []
 
+#I think this will break with missing species
+print "here2"
 for gene in good_genes:
     target_seqs_dna = [ref_genes_dna[gene]] #add the reference seq first
     for strain in strains_dna:
@@ -242,17 +250,20 @@ for gene in good_genes:
             target_seqs_dna.append(target)
         except KeyError:
             pass
-    #only do this if all strains are repressented 
-    if len(target_seqs_dna) == len(strains_dna)+1:
-        #should be == to good_genes
-        good_genes_dna.append(gene)
-        tmp = open('./unaln/%s.fas'%gene, 'w')
-        for rec in target_seqs_dna:
-            SeqIO.write(rec, tmp, 'fasta')
-        tmp.close()
-#check as pep from DNA should be equal length
-assert good_genes == good_genes_dna
+    #only do this if all strains are repressented
+    #if len(target_seqs_dna) == len(strains_dna)+1:
+    #should be == to good_genes
+    good_genes_dna.append(gene)
+    tmp = open('./unaln/%s.fas'%gene, 'w')
+    for rec in target_seqs_dna:
+        SeqIO.write(rec, tmp, 'fasta')
+    tmp.close()
 
+#check as pep from DNA should be equal length
+#will fail because no genes conserved over all species
+#assert good_genes == good_genes_dna
+
+print "here3"
 #now constrain dna alignment based on pep aln
 #need seq dict for aln file
 aln_files = file_list('./aln/*.aln.faa')
